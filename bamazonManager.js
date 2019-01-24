@@ -1,6 +1,8 @@
+//Access the inquirer and mysql modules.
 const inquirer = require("inquirer");
 const mysql = require("mysql");
 
+//Helps us connect to the SQL database for bamazon
 const connection = mysql.createConnection({
     host: "localhost",
 
@@ -12,11 +14,13 @@ const connection = mysql.createConnection({
     database: "bamazon"
 });
 
+//Connect to the database and start the program
 connection.connect(function (err) {
     if (err) throw err;
     managerOptions();
 });
 
+//Gets input on the manager on what he/she wants to do. From there, the program will execute the appropriate function
 function managerOptions() {
     inquirer.prompt([
         {
@@ -27,6 +31,7 @@ function managerOptions() {
         }
     ]).then(function (answer) {
 
+        //Use a switch case since we have multiple scenarios
         switch (answer.option) {
 
             case "View Products for Sale":
@@ -48,6 +53,7 @@ function managerOptions() {
     });
 };
 
+//Shows current information stored in the products table
 function viewProducts() {
     connection.query("SELECT item_id, product_name, price, stock_quantity FROM products", function (err, res) {
         if (err) throw err;
@@ -58,6 +64,8 @@ function viewProducts() {
     });
 };
 
+
+//Provides a list of items whose inventory is less than 5
 function lowInventory(){
     connection.query("SELECT product_name, stock_quantity FROM products WHERE stock_quantity < 5", function(err, res){
         if(err) throw err;
@@ -68,6 +76,8 @@ function lowInventory(){
     });
 };
 
+
+//Function to increase the stock of a designated product by a particular amount. 
 function addInventory(){
     
     inquirer.prompt([
@@ -91,6 +101,8 @@ function addInventory(){
     });
 };
 
+
+/*This function allows us to add a completely new product to our store. We take all of the required information and insert it into our database table*/ 
 function addNew(){
     inquirer.prompt([
         {
