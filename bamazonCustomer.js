@@ -48,13 +48,16 @@ function buyAThing(){
         //Check to see if item is in stock. If not, let user know.
         connection.query("SELECT product_name, price, stock_quantity FROM products WHERE item_id = ?", [response.itemID], function(err, res){
             if(err) throw err;
-            if(response.howMany > res[0].stock_quantity || res[0].stock_quantity === 0){
-                console.log("Insufficient Inventory! Try again later.");                
+            console.log("");
+            //If the store doesn't even have the item, then 
+            if(res.length === 0){
+                
+                console.log("The item ID number does not exist");
             }
-            else{
-                console.log(res);
-                console.log(res[0].price);
-                console.log(response.howMany);
+            else if(response.howMany > res[0].stock_quantity || res[0].stock_quantity === 0){
+                console.log("Insufficient Inventory! Try again later.");                
+            }            
+            else{                
                 let total = res[0].price * response.howMany;
                 let reducedStock = res[0].stock_quantity - response.howMany;
                 console.log(`Absolutely. That will be $${total}. Thank you.`);
