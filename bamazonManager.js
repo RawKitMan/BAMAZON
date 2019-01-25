@@ -1,6 +1,7 @@
-//Access the inquirer and mysql modules.
+//Access the inquirer, console.table(for display purposes) and mysql modules.
 const inquirer = require("inquirer");
 const mysql = require("mysql");
+const table = require("console.table");
 
 //Helps us connect to the SQL database for bamazon
 const connection = mysql.createConnection({
@@ -57,29 +58,25 @@ function managerOptions() {
 function viewProducts() {
     connection.query("SELECT item_id, product_name, price, stock_quantity FROM products", function (err, res) {
         if (err) throw err;
-        res.forEach(function (element) {
-            console.log(`${element.item_id}         ${element.product_name}         $${element.price}         ${element.stock_quantity}\n`);
-        });
+        console.log("");
+        console.table(res);
         connection.end();
     });
 };
-
 
 //Provides a list of items whose inventory is less than 5
-function lowInventory(){
-    connection.query("SELECT product_name, stock_quantity FROM products WHERE stock_quantity < 5", function(err, res){
-        if(err) throw err;
-        res.forEach(function(element){
-            console.log(`${element.product_name}     ${element.stock_quantity}`);
-        });
+function lowInventory() {
+    connection.query("SELECT product_name, stock_quantity FROM products WHERE stock_quantity < 5", function (err, res) {
+        if (err) throw err;
+        console.log("");
+        console.table(res);
         connection.end();
     });
 };
 
-
 //Function to increase the stock of a designated product by a particular amount. 
-function addInventory(){
-    
+function addInventory() {
+
     inquirer.prompt([
         {
             name: "item",
@@ -89,21 +86,30 @@ function addInventory(){
             name: "restock",
             message: "How many do you want to add?"
         }
-    ]).then(function(response){
+    ]).then(function (response) {
 
         let item = response.item;
         let restock = response.restock;
 
-        connection.query(`UPDATE products SET stock_quantity = (${restock} + stock_quantity) WHERE product_name = ?`, [item], function(err, res1){
+        connection.query("SELECT product_name FROM products WHERE product_name = ?", [item], function (err, result) {
+
             if (err) throw err;
-            viewProducts();
+            console.log("");
+
+            //If item is not currently being sold in store, An error message must be sent to the user.
+            if (result.length === 0) {
+                console.log("Product not in inventory!!");
+            }
+            connection.query(`UPDATE products SET stock_quantity = (${restock} + stock_quantity) WHERE product_name = ?`, [item], function (err, res1) {
+                if (err) throw err;
+                viewProducts();
+            });
         });
     });
 };
 
-
-/*This function allows us to add a completely new product to our store. We take all of the required information and insert it into our database table*/ 
-function addNew(){
+/*This function allows us to add a completely new product to our store. We take all of the required information and insert it into our database table*/
+function addNew() {
     inquirer.prompt([
         {
             name: "product",
@@ -121,15 +127,27 @@ function addNew(){
             name: "stock",
             message: "How many will we have in stock?"
         }
-    ]).then(function(response){
-        connection.query(`INSERT INTO products SET ?`,{
-            product_name: response.product,
-            department_name: response.department,
-            price: response.price,
-            stock_quantity: response.stock
-        }, function(err){
+    ]).then(function (response) {
+
+        connection.query("SELECT product_name FROM products WHERE product_name = ?", [response.product], function (err, res) {
+
             if (err) throw err;
-            viewProducts();
+
+            if (res.length > 0) {
+                console.log("Product is already in our inventory. Please add to current inventory!");
+                viewProducts();
+            }
+            else {
+                connection.query(`INSERT INTO products SET ?`, {
+                    product_name: response.product,
+                    department_name: response.department,
+                    price: response.price,
+                    stock_quantity: response.stock
+                }, function (err) {
+                    if (err) throw err;
+                    viewProducts();
+                });
+            };
         });
     });
 };
